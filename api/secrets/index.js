@@ -6,6 +6,23 @@
   If no fallback is provided, TESTS WON'T WORK and other
   developers cloning this repo won't be able to run the project as is.
  */
-module.exports = {
+const jwt = require('jsonwebtoken')
+const JWT_SECRET = process.env.JWT_SECRET || "shh"
 
+function tokenMaker(user){
+  const payload = {
+    subject: user.id,
+    username: user.username,
+    role:user.role
+  }
+  const options = {
+    expiresIn: '1d'
+  }
+  const token = jwt.sign(payload,JWT_SECRET,options)
+  return token
+}
+
+module.exports = {
+  tokenMaker,
+   JWT_SECRET
 }
