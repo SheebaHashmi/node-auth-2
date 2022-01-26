@@ -1,9 +1,9 @@
 const router = require("express").Router();
-const { checkUsernameExists, validateRoleName,checkRole } = require('./auth-middleware');
-const helpers = require('../users/users-model')
+const { checkUsernameExists, validateRoleName} = require('./auth-middleware');
+const Helpers = require('../users/users-model')
 const bcrypt = require('bcryptjs')
 const { JWT_SECRET,tokenMaker } = require("../secrets");
-const jwtDecode = require('jwt-decode')
+
  // use this secret!
 
 router.post("/register", validateRoleName,(req, res, next) => {
@@ -18,25 +18,18 @@ router.post("/register", validateRoleName,(req, res, next) => {
       "role_name": "angel"
     }
    */
-  try{
-    let {username,password} = req.body
-    const hash = bcrypt.hashSync(password, 8)
-
-  helpers.add({
-      username,
-      password:hash,
-      role_name:req.role_name
-    })
-    next({status: 201,message: req.body})
-    
-  }
-  catch(err){
-    next(err)
-  }
+  let {username,password} = req.body
+  const {role_name} = req
+  const hash = bcrypt.hashSync(password, 8)
+    Helpers.add({ username,password:hash,role_name })
+    .then(newUser => {
+      res.status(201).json(newUser)})
+    .catch(next)
+ 
 });
 
 
-router.post("/login",checkUsernameExists,checkRole,(req, res, next) => {
+router.post("/login",checkUsernameExists,(req, res, next) => {
   /**
     [POST] /api/auth/login { "username": "sue", "password": "1234" }
 
@@ -58,8 +51,8 @@ router.post("/login",checkUsernameExists,checkRole,(req, res, next) => {
    */
     let {password} = req.body
     if(bcrypt.compareSync(password , req.user.password)){
-      const token = tokenMaker({...req.user,role_name:req.role_name})
- 
+      const token = tokenMaker(req.user)
+
         res.status(200).json({message:`${req.user.username} is back`,token})
 
     }else{
