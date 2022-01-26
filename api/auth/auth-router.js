@@ -1,11 +1,12 @@
 const router = require("express").Router();
-const { checkUsernameExists, validateRoleName } = require('./auth-middleware');
+const { checkUsernameExists, validateRoleName,checkRole } = require('./auth-middleware');
 const helpers = require('../users/users-model')
 const bcrypt = require('bcryptjs')
 const { JWT_SECRET,tokenMaker } = require("../secrets");
+const jwtDecode = require('jwt-decode')
  // use this secret!
 
-router.post("/register", validateRoleName,async (req, res, next) => {
+router.post("/register", validateRoleName,(req, res, next) => {
   /**
     [POST] /api/auth/register { "username": "anna", "password": "1234", "role_name": "angel" }
 
@@ -21,15 +22,12 @@ router.post("/register", validateRoleName,async (req, res, next) => {
     let {username,password} = req.body
     const hash = bcrypt.hashSync(password, 8)
 
-    // password = hash
-
-    // const response = await helpers.add({...req.body,role_name:req.role_name})
-    const response = await helpers.add({
+  helpers.add({
       username,
       password:hash,
       role_name:req.role_name
     })
-    next({status: 201,message: response})
+    next({status: 201,message: req.body})
     
   }
   catch(err){
@@ -38,7 +36,7 @@ router.post("/register", validateRoleName,async (req, res, next) => {
 });
 
 
-router.post("/login",checkUsernameExists,  (req, res, next) => {
+router.post("/login",checkUsernameExists,checkRole,(req, res, next) => {
   /**
     [POST] /api/auth/login { "username": "sue", "password": "1234" }
 
@@ -60,26 +58,13 @@ router.post("/login",checkUsernameExists,  (req, res, next) => {
    */
     let {password} = req.body
     if(bcrypt.compareSync(password , req.user.password)){
-      const token = tokenMaker(req.user)
+      const token = tokenMaker({...req.user,role_name:req.role_name})
+ 
         res.status(200).json({message:`${req.user.username} is back`,token})
 
     }else{
       res.status(401).json({message:'Invalid credentials'})
     }
-  
- 
-    // if(req.user){
-    //   if(bcrypt.compareSync(req.body.password,req.user.password)){
-
-    //     console.log('password')
-    //   }
-    //   const token = tokenMaker(req.user)
-    //   res.status(200).json({message:`${req.user.username} is back`,token})
-    // }
-    // else{
-    //   next()
-
-    // }
   
 
  

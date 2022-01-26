@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken')
 const { JWT_SECRET } = require("../secrets"); // use this secret!
 const Users = require('../users/users-model')
+const db = require('../../data/db-config.js');
 const restricted = (req, res, next) => {
   /*
     If the user does not provide a token in the Authorization header:
@@ -44,6 +45,7 @@ const only = role_name => (req, res, next) => {
 
     Pull the decoded token from the req object, to avoid verifying it again!
   */
+ 
  if(req.decodedJwt.role == role_name){
    next()
  }else{
@@ -113,10 +115,20 @@ const validateRoleName = (req, res, next) => {
    
   
 }
+const checkRole = async (req,res,next) => {
+  
+  const roles =  await db('roles').where("role_id",req.user.role_id);
+  if(roles[0].role_name){
+   req.role_name = roles[0].role_name
+    next()
+  }
+
+}
 
 module.exports = {
   restricted,
   checkUsernameExists,
   validateRoleName,
   only,
+  checkRole
 }

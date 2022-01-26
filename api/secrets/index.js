@@ -11,14 +11,15 @@ const JWT_SECRET = process.env.JWT_SECRET || "shh"
 
 function tokenMaker(user){
   const payload = {
-    subject: user.id,
+    subject: user.user_id,
     username: user.username,
-    role:user.role
+    role_name:user.role_name 
   }
   const options = {
     expiresIn: '1d'
   }
   const token = jwt.sign(payload,JWT_SECRET,options)
+  
   return token
 }
 
